@@ -1,5 +1,6 @@
 ﻿using Ecom.Infrastructure.Repository.authRepository;
 using Ecom.Infrastructure.Repository.ImageRepository;
+using Ecom.Infrastructure.Repository.ProductPriceRepository;
 using Ecom.Infrastructure.Repository.ProductRepository;
 using Ecom.Infrastructure.Repository.SpecificationRepository;
 using Ecom.Infrastructure.Repository.UserRepository;
@@ -24,6 +25,8 @@ namespace Ecom.Infrastructure.UnitOfWork
 
         IProductSpecificationRepository ProductSpecificationRepository { get; }
 
-        Task<bool> SaveChangeAsync();
+        IProductPriceRepository ProductPriceRepository { get; }
+
+        Task<bool> SaveChangesAsync();
     }
 }

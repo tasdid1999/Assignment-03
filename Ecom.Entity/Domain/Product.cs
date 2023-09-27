@@ -19,11 +19,7 @@ namespace Ecom.Entity.Domain
         [Required]
         public string Brand { get; set; }
 
-        public virtual IEnumerable<ProductPrice> Prices { get; set; }
-
-        public virtual IEnumerable<ProductImage> Images { get; set; }
-
-        public virtual IEnumerable<ProductSpecification> Specification { get; set; }
+        
 
 
     }

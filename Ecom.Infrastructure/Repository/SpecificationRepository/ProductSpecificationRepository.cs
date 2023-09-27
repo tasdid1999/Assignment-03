@@ -15,19 +15,16 @@ namespace Ecom.Infrastructure.Repository.SpecificationRepository
     {
        
         private readonly SqlConnectionFactory _connectionFactory;
-        public ProductSpecificationRepository(SqlConnectionFactory connectionFactory)
+        private readonly Context _dbContext;
+        public ProductSpecificationRepository(SqlConnectionFactory connectionFactory, Context dbContext)
         {
             _connectionFactory = connectionFactory;
+            _dbContext = dbContext;
         }
 
-        public async Task<Dictionary<string, string>> GetProductSpecificationsById(int productId)
+        public async Task AddSpecification(List<ProductSpecification> specifications)
         {
-            using var connection = _connectionFactory.Create();
-
-            var res = await connection.QueryAsync<KeyValuePair<string,string>>($"sp_GetSpecification @productId={productId}");
-
-            return res.ToDictionary(kvp => kvp.Key , kvp => kvp.Value);
-            
+            await _dbContext.Specifications.AddRangeAsync(specifications);
         }
     }
     

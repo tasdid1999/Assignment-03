@@ -16,10 +16,8 @@ namespace Ecom.Entity.DataBase
 
         public string Model { get; set; }
 
-        public string Key { get; set; }
+        public Decimal Price { get; set; }
 
-        public string Value { get; set; }
-
-        public string ImagePath { get; set; }
+        public int StatusId { get; set; }
     }
 }

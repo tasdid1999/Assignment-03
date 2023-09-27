@@ -15,23 +15,17 @@ namespace Ecom.Infrastructure.Repository.authRepository
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly Context _dbContext;
-        
 
         public AuthRepository(UserManager<IdentityUser> userManager,
                              SignInManager<IdentityUser> signInManager,
-                             RoleManager<IdentityRole> roleManager,
-                             Context dbContext
+                             RoleManager<IdentityRole> roleManager
                              
                              )
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
-            _dbContext = dbContext;
             
-
-
         }
         public async Task<bool> LoginAsync(UserLoginRequest user)
         {
@@ -61,7 +55,6 @@ namespace Ecom.Infrastructure.Repository.authRepository
                     await _roleManager.CreateAsync(new IdentityRole(user.Role));
                 }
                 await _userManager.AddToRoleAsync(newUser, user.Role);
-
 
             }
 

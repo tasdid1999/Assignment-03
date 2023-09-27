@@ -1,5 +1,6 @@
 ﻿using Azure;
 using Dapper;
+using Ecom.ClientEntity.Request.Product;
 using Ecom.ClientEntity.Response;
 using Ecom.Entity.DataBase;
 using Ecom.Entity.Domain;
@@ -27,44 +28,110 @@ namespace Ecom.Infrastructure.Repository.ProductRepository
             _connectionFactory = connectionFactory;
             _dbcontext = dbcontext;
         }
-        public void Add(Product product)
+
+        public async Task Add(Product product)
         {
-            throw new NotImplementedException();
+            await _dbcontext.Products.AddAsync(product);
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<Product?> Find(int id)
         {
-           var product = await _dbcontext.Products.Where(product => product.Id == id).FirstOrDefaultAsync();
-
-           if (product is not null)
-           {
-                product.StatusId = 2;
-
-                return true;
-           }
-
-            return false;
+            return await _dbcontext.Products.FindAsync(id);
         }
 
-        public async Task<List<DbProduct>> GetAllProduct(int page , int pageSize)
+        public async Task<List<ProductResponse>> GetAllProduct(int page, int pageSize)
         {
             using var connection = _connectionFactory.Create();
-            var products = await connection.QueryAsync<DbProduct>($"sp_GetAllProduct @page={page} , @pageSize={pageSize}", CommandType.StoredProcedure);
-            return products.ToList();
-            
+
+            var productRespnose = new List<ProductResponse>();
+
+            var products = await connection.QueryAsync<ProductDetails, ProductSpecificationResponse, ProductImageResponse, ProductResponse>(
+                                                      $"sp_GetAllProduct @page={page}, @pageSize={pageSize}",
+
+                   (product, specification, image) =>
+                   {
+                       var existingProduct = productRespnose.FirstOrDefault(p => p.Product.Id == product.Id);
+
+                       if (existingProduct == null)
+                       {
+                           existingProduct = new ProductResponse
+                           {
+                               Product = product,
+                               Specifications = new List<ProductSpecificationResponse>(),
+                               Images = new List<string>()
+                           };
+                           productRespnose.Add(existingProduct);
+                       }
+                       else
+                       {
+                           if (specification.Key is not null && !existingProduct.Specifications.Where(x => x.Key == specification.Key).Any())
+                           {
+                               existingProduct.Specifications.Add(specification);
+                           }
+                           if (image.ImagePath is not null && !existingProduct.Images.Where(images => images == image.ImagePath).Any())
+                           {
+                               existingProduct.Images.Add(image.ImagePath);
+                           }
+
+                       }
+
+
+                       return existingProduct;
+                   },
+                  splitOn: "SpecificationId,ImageId"
+            );
+
+
+            return productRespnose;
         }
 
-        public async Task<List<DbProduct>> GetById(int id)
+
+
+
+        public async Task<ProductResponse?> GetById(int id)
         {
             using var connection = _connectionFactory.Create();
-            var products = await connection.QueryAsync<DbProduct>($"sp_GetProductById @id={id}", CommandType.StoredProcedure);
 
-            return products.ToList();
+            ProductResponse productResponse = null;
+
+            var products = await connection.QueryAsync<ProductDetails, ProductSpecificationResponse, ProductImageResponse, ProductResponse>($"sp_GetProductById @id={id}",
+
+                (product, specification, image) =>
+                {
+
+
+                    if (productResponse is null)
+                    {
+                        productResponse = new ProductResponse
+                        {
+                            Product = product,
+                            Specifications = new List<ProductSpecificationResponse>(),
+                            Images = new List<string>()
+                        };
+
+                    }
+                    else
+                    {
+                        if (specification.Key is not null && !productResponse.Specifications.Where(x => x.Key == specification.Key).Any())
+                        {
+                            productResponse.Specifications.Add(specification);
+                        }
+                        if (image.ImagePath is not null && !productResponse.Images.Where(images => images == image.ImagePath).Any())
+                        {
+                            productResponse.Images.Add(image.ImagePath);
+                        }
+
+                    }
+
+                    return productResponse;
+                },splitOn: "SpecificationId,ImageId"
+
+                );
+
+            return productResponse;
         }
 
-        public void Update(Product product)
-        {
-            throw new NotImplementedException();
-        }
+
     }
 }
+

@@ -22,5 +22,6 @@ namespace Ecom.Entity.Helper
             Role = role;
 
         }
+        public string SecretKey { get; set; }
     }
 }

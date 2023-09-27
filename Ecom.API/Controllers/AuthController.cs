@@ -12,11 +12,13 @@ namespace Ecom.API.Controllers
     {
         private readonly IUserService _userService;
         private readonly IAuthService _authService;
+        private readonly IConfiguration _configuration;
 
-        public AuthController(IUserService userService, IAuthService authService)
+        public AuthController(IUserService userService, IAuthService authService, IConfiguration configuration)
         {
             _userService = userService;
             _authService = authService;
+            _configuration = configuration;
         }
 
         [HttpPost("register")]
@@ -64,7 +66,9 @@ namespace Ecom.API.Controllers
 
                if(isLogInSucces)
                {
-                 var token = _authService.GetJwtToken(await _userService.GetUserForTokenAsync(user.Email));
+                 var userForToken = await _userService.GetUserForTokenAsync(user.Email);
+                 userForToken.SecretKey = _configuration.GetValue<string>("Jwt:SecretKey");
+                 var token = _authService.GetJwtToken(userForToken);
 
                  return Ok(new { IsSuccess = true, Message = "Login Succesful", Token = token });
 

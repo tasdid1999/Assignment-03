@@ -1,4 +1,5 @@
 ﻿using Ecom.Entity.Helper;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
@@ -12,11 +13,18 @@ namespace Ecom.Service.Token
 {
     public class JwtTokenFactory
     {
+        
+        public JwtTokenFactory()
+        {
+            
+        }
+
+       
         public string CreateJWT(UserForToken user)
         {
             var jwtTokenHandler = new JwtSecurityTokenHandler();
 
-            var key = Encoding.ASCII.GetBytes("secretKeyveryimportant123456789");
+            var key = Encoding.ASCII.GetBytes(user.SecretKey);
 
             var identity = new ClaimsIdentity(new Claim[]
             {
@@ -39,6 +47,15 @@ namespace Ecom.Service.Token
             var accessToken = jwtTokenHandler.WriteToken(token);
 
             return accessToken;
+        }
+        public static string GetUserIdFromToken(string token)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var tokenClaims = tokenHandler.ReadJwtToken(token);
+
+            var userId = tokenClaims.Claims.FirstOrDefault(claim => claim.Type == "nameid")?.Value;
+
+            return userId ?? "User_ID_NOT_FOUND";
         }
     }
 }

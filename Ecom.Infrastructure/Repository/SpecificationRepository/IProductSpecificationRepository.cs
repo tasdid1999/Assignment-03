@@ -9,6 +9,6 @@ namespace Ecom.Infrastructure.Repository.SpecificationRepository
 {
     public interface IProductSpecificationRepository
     {
-        Task<Dictionary<string,string>> GetProductSpecificationsById(int productId);
+        Task AddSpecification(List<ProductSpecification> specifications);
     }
 }

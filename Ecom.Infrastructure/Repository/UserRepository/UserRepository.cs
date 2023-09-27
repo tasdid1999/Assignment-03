@@ -12,6 +12,7 @@ namespace Ecom.Infrastructure.Repository.UserRepository
     {
         private readonly UserManager<IdentityUser> _userManager;
 
+        
         public UserRepository(UserManager<IdentityUser> userManager)
         {
             _userManager = userManager;

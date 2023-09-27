@@ -1,19 +1,26 @@
 using AutoMapper;
+using Ecom.API.Validator;
 using Ecom.Entity.Helper;
 using Ecom.Infrastructure.Data;
 using Ecom.Infrastructure.Repository.authRepository;
 using Ecom.Infrastructure.Repository.ImageRepository;
+using Ecom.Infrastructure.Repository.ProductPriceRepository;
 using Ecom.Infrastructure.Repository.ProductRepository;
 using Ecom.Infrastructure.Repository.SpecificationRepository;
 using Ecom.Infrastructure.Repository.UserRepository;
 using Ecom.Infrastructure.UnitOfWork;
 using Ecom.Service.authService;
+using Ecom.Service.Image;
 using Ecom.Service.Mapper;
+using Ecom.Service.Price;
 using Ecom.Service.productService;
+using Ecom.Service.Specification;
 using Ecom.Service.User;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -33,6 +40,7 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkSto
 builder.Services.AddScoped<IAuthRepository , AuthRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IProductPriceRepository,ProductPriceRepository>();
 builder.Services.AddScoped<IProductImageRepository,ProductImageRepository>();
 builder.Services.AddScoped<IProductSpecificationRepository, ProductSpecificationRepository>();
 
@@ -40,6 +48,12 @@ builder.Services.AddScoped<IProductSpecificationRepository, ProductSpecification
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IProductPriceService, ProductPriceService>();
+builder.Services.AddScoped<IProductSpecificationService,ProductSpecificationService>();
+builder.Services.AddScoped<IImageServices, ImageService>();
+builder.Services.AddScoped<ProductValidator>();
+
+
 //unitofwork
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 //automapper configuration
@@ -59,7 +73,7 @@ builder.Services.AddAuthentication(x =>
     x.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes("secretKeyveryimportant123456789")),
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(builder.Configuration.GetValue<string>("Jwt:SecretKey"))),
         ValidateAudience = false,
         ValidateIssuer = false,
         ClockSkew = TimeSpan.Zero

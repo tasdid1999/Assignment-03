@@ -1,7 +1,16 @@
 ﻿using AutoMapper;
+using Azure.Core;
+using Ecom.ClientEntity.Request.Product;
 using Ecom.ClientEntity.Response;
 using Ecom.Entity.Domain;
 using Ecom.Infrastructure.UnitOfWork;
+using Ecom.Service.Image;
+using Ecom.Service.Price;
+using Ecom.Service.Specification;
+using Ecom.Service.Token;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,27 +22,122 @@ namespace Ecom.Service.productService
     public class ProductService : IProductService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IImageServices _imageService;
+        private readonly IProductPriceService _priceService;
+        private readonly IProductSpecificationService _specificationService;
         private readonly IMapper _mapper;
 
-        public ProductService(IUnitOfWork unitOfWork, IMapper mapper)
+        public ProductService(IUnitOfWork unitOfWork, IMapper mapper, IImageServices imageService, IProductPriceService priceService, IProductSpecificationService specificationService)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _imageService = imageService;
+            _priceService = priceService;
+            _specificationService = specificationService;
         }
-        public void Add(Product product)
+
+        public async Task<bool> Active(int id)
         {
-            throw new NotImplementedException();
+            var product = await _unitOfWork.ProductRepository.Find(id);
+
+            if (product is not null)
+            {
+                if (product.StatusId == 0)
+                {
+                    product.StatusId = 1;
+                    return await _unitOfWork.SaveChangesAsync() ? true : false;
+
+                }
+
+                return false;
+            }
+
+            return false;
+        }
+        public async Task<bool> InActive(int id)
+        {
+            var product = await _unitOfWork.ProductRepository.Find(id);
+
+            if (product is not null)
+            {
+                if (product.StatusId == 1)
+                {
+                    product.StatusId = 0;
+                    return await _unitOfWork.SaveChangesAsync() ? true : false;
+
+                }
+
+                return false;
+            }
+
+            return false;
+        }
+
+        public async Task<bool> Add(ProductRequest request,string token)
+        {
+            var CreatedBy = JwtTokenFactory.GetUserIdFromToken(token);
+
+            var product = new Product
+            {
+                Id = 0,
+                Name = request.ProductName,
+                Brand = request.Brand,
+                Model = request.Model,
+                StatusId = 1,
+                CreatedAt = DateTime.Now,
+                CreatedBy = CreatedBy
+
+
+            };
+            await _unitOfWork.ProductRepository.Add(product);
+            await _unitOfWork.SaveChangesAsync();
+
+            var LastInsertedProductById =  product.Id;
+            
+            //product price add section
+            var price = new ProductPriceRequest
+            {
+                Price = request.Price,
+                ProductId = LastInsertedProductById,
+                UserId = CreatedBy
+            };
+            await _priceService.AddPrice(price);
+           
+
+
+            //product specification add section
+            var specificationData = JsonConvert.DeserializeObject<List<KeyValuePair<string, string>>>(request.Specification);
+            var specificationRequest = new ProductSpecificationRequest
+            {
+                UserId = CreatedBy,
+                ProductId = LastInsertedProductById,
+                Specification = specificationData
+            };
+            await _specificationService.AddSpecification(specificationRequest);
+
+
+            //image section
+            var productImage = new ProductImageRequest
+            {
+                Images = request.Images,
+                ProductId = LastInsertedProductById,
+                CreatedBy = CreatedBy,
+            };
+            await _imageService.AddImage(productImage);
+
+            return await _unitOfWork.SaveChangesAsync();
+  
         }
 
         public async Task<bool> Delete(int id)
         {
-            var isDeleted = await _unitOfWork.ProductRepository.DeleteAsync(id);
+            var product = await _unitOfWork.ProductRepository.Find(id);
 
-
-            if (isDeleted)
+            if(product is not null && product.StatusId != 2)
             {
-                await _unitOfWork.ProductImageRepository.DeleteImageByProductId(id);
-                return await _unitOfWork.SaveChangeAsync();
+               product.StatusId = 2;
+               await _unitOfWork.SaveChangesAsync();
+               return true;
             }
 
             return false;
@@ -43,78 +147,52 @@ namespace Ecom.Service.productService
         {
             var products = await _unitOfWork.ProductRepository.GetAllProduct(page, pageSize);
 
-            var productId = new List<int>();
-            var ProductResponse = new List<ProductResponse>();
-
-            foreach(var product in products)
-            {
-                if (productId.Exists(x => x == product.Id))
-                {
-                    var ExistingProduct = ProductResponse.Where(x => x.Id == product.Id).FirstOrDefault();
-
-                    //image inserting
-                    if(ExistingProduct.images.Count == 0 || !ExistingProduct.images.Exists(x => x == product.ImagePath))
-                    {
-                        ExistingProduct.images.Add(product.ImagePath);
-                    }
-                   
-                    //specification inserting
-
-                    if(ExistingProduct.Specification.Count == 0 || !ExistingProduct.Specification.ContainsKey(product.Key))
-                    {
-                        ExistingProduct.Specification.Add(product.Key,product.Value);
-                    }
-
-                }
-                else
-                {
-                    productId.Add(product.Id);
-                    ProductResponse.Add(new ProductResponse { Id = product.Id, Brand = product.Brand, Model = product.Model, Name = product.Name }) ;
-                }
-            }
-
-            return ProductResponse;
+            return products;
 
         }
 
         public async Task<ProductResponse?> GetProductById(int id)
         {
-            var productInfo = await _unitOfWork.ProductRepository.GetById(id);
-
-            ProductResponse? productResponse = null;
-
-            if(productInfo is null)
-            {
-                return productResponse;
-            }
-            foreach(var info in productInfo)
-            {
-                if (productResponse is null)
-                {
-                    productResponse = new ProductResponse { Id = info.Id, Brand = info.Brand, Name = info.Name, Model = info.Model };
-                }
-                else
-                {
-                    if (productResponse.images.Count == 0 || !productResponse.images.Exists(x => x == info.ImagePath))
-                    {
-                        productResponse.images.Add(info.ImagePath);
-                    }
-                    if (productResponse.Specification.Count == 0 || !productResponse.Specification.ContainsKey(info.Key))
-                    {
-                        productResponse.Specification.Add(info.Key, info.Value);
-                    }
-                }
-            
-                   
-            }
-
-            return productResponse;
-
+           return await _unitOfWork.ProductRepository.GetById(id);
         }
 
-        public void Update(Product product)
+  
+        public async Task<bool> Update(ProductRequest product , int productId, string token)
         {
-            throw new NotImplementedException();
+            var updatedBy = JwtTokenFactory.GetUserIdFromToken(token);
+
+            var dbProduct = await _unitOfWork.ProductRepository.GetById(productId);
+
+            if(dbProduct is  null)
+            {
+                return false;
+            }
+
+            var newProduct = new Product
+            {
+                Id = productId,
+                Name = product.ProductName,
+                Brand = product.Brand,
+                Model = product.Model,
+                UpdatedBy = updatedBy,
+            };
+
+           // var isProductUpdated = await _unitOfWork.ProductRepository.Update(newProduct);
+
+            var newProductPrice = new ProductPrice
+            {
+                Price = product.Price,
+                ProductId = productId,
+                UpdatedAt = DateTime.UtcNow,
+                UpdatedBy = updatedBy
+            };
+
+            var isPriceUpdated = await _unitOfWork.ProductPriceRepository.UpdatePrice(newProductPrice);
+
+            
+
+            
+            return true;
         }
     }
 }

@@ -116,8 +116,8 @@ namespace Ecom.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Price")
-                        .HasColumnType("int");
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
@@ -381,7 +381,7 @@ namespace Ecom.Infrastructure.Migrations
             modelBuilder.Entity("Ecom.Entity.Domain.ProductImage", b =>
                 {
                     b.HasOne("Ecom.Entity.Domain.Product", "Product")
-                        .WithMany("Images")
+                        .WithMany()
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -392,7 +392,7 @@ namespace Ecom.Infrastructure.Migrations
             modelBuilder.Entity("Ecom.Entity.Domain.ProductPrice", b =>
                 {
                     b.HasOne("Ecom.Entity.Domain.Product", "Product")
-                        .WithMany("Prices")
+                        .WithMany()
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -403,7 +403,7 @@ namespace Ecom.Infrastructure.Migrations
             modelBuilder.Entity("Ecom.Entity.Domain.ProductSpecification", b =>
                 {
                     b.HasOne("Ecom.Entity.Domain.Product", "Product")
-                        .WithMany("Specification")
+                        .WithMany()
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -460,15 +460,6 @@ namespace Ecom.Infrastructure.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("Ecom.Entity.Domain.Product", b =>
-                {
-                    b.Navigation("Images");
-
-                    b.Navigation("Prices");
-
-                    b.Navigation("Specification");
                 });
 #pragma warning restore 612, 618
         }

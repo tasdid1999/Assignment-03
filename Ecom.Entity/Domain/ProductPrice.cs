@@ -14,6 +14,6 @@ namespace Ecom.Entity.Domain
         public Product Product { get; set; }
 
         [Required]
-        public int Price { get; set; }
+        public decimal Price { get; set; }
     }
 }

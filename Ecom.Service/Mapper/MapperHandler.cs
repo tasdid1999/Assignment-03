@@ -14,8 +14,8 @@ namespace Ecom.Service.Mapper
     {
         public MapperHandler()
         {
-            CreateMap<Product, ProductResponse>();
-            CreateMap<DbProduct , ProductResponse>();
+            CreateMap<Product, ProductDetails>();
+            CreateMap<DbProduct , ProductDetails>();
         }
     }
 }

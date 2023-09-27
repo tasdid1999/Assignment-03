@@ -13,5 +13,7 @@ namespace Ecom.Infrastructure.Repository.ImageRepository
         Task<List<string>> GetAllImageByProductId(int productId);
 
         Task<bool> DeleteImageByProductId(int productId);
+
+        Task AddImage(ProductImage image);
     }
 }

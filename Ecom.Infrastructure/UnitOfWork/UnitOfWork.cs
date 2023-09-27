@@ -1,9 +1,11 @@
 ﻿using Ecom.Infrastructure.Data;
 using Ecom.Infrastructure.Repository.authRepository;
 using Ecom.Infrastructure.Repository.ImageRepository;
+using Ecom.Infrastructure.Repository.ProductPriceRepository;
 using Ecom.Infrastructure.Repository.ProductRepository;
 using Ecom.Infrastructure.Repository.SpecificationRepository;
 using Ecom.Infrastructure.Repository.UserRepository;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,33 +17,42 @@ namespace Ecom.Infrastructure.UnitOfWork
     public class UnitOfWork : IUnitOfWork
     {
         private readonly Context _dbcontext;
-        public UnitOfWork(IAuthRepository authRepository,
-                          IUserRepository userRepository,
-                          IProductRepository productRepository,
-                          IProductImageRepository ProductImageRepository,
-                          IProductSpecificationRepository ProductSpecificationRepository,
-                          Context dbcontext)
+        private readonly SqlConnectionFactory _connectionFactory;
+        private readonly UserManager<IdentityUser> _userManager;
+        private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
+        public UnitOfWork(Context dbcontext, SqlConnectionFactory connectionFactory, UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager = null, RoleManager<IdentityRole> roleManager = null)
         {
-            this.AuthRepository = authRepository;
-            this.UserRepository = userRepository;
-            this.ProductRepository = productRepository;
-            this.ProductImageRepository = ProductImageRepository;
-            this.ProductSpecificationRepository = ProductSpecificationRepository;
             _dbcontext = dbcontext;
+            _connectionFactory = connectionFactory;
+            _userManager = userManager;
+            _signInManager = signInManager;
+            _roleManager = roleManager;
+
+            AuthRepository = new AuthRepository(_userManager, _signInManager, _roleManager);
+            UserRepository =new UserRepository(_userManager);
+            ProductRepository = new ProductRepository(_connectionFactory, _dbcontext);
+            ProductImageRepository = new ProductImageRepository(_connectionFactory, _dbcontext);
+            ProductSpecificationRepository = new ProductSpecificationRepository(_connectionFactory, _dbcontext);
+            ProductPriceRepository  = new ProductPriceRepository(_connectionFactory, _dbcontext);
+
         }
-        public IAuthRepository AuthRepository { get; set; } 
+        public IAuthRepository AuthRepository { get; private set; }
 
-        public IUserRepository UserRepository {  get; set; }
+        public IUserRepository UserRepository { get; private set; }
 
-        public IProductRepository ProductRepository { get; set; }
+        public IProductRepository ProductRepository { get; private set; }
+        public IProductImageRepository ProductImageRepository { get; private set; }
 
-        public IProductImageRepository ProductImageRepository { get; set; }
+        public IProductSpecificationRepository ProductSpecificationRepository { get; private set; }
 
-        public IProductSpecificationRepository ProductSpecificationRepository { get; set; }
+        public IProductPriceRepository ProductPriceRepository { get; private set; }
 
-        public async Task<bool> SaveChangeAsync()
+        public async Task<bool>  SaveChangesAsync()
         {
             return await _dbcontext.SaveChangesAsync() > 0;
         }
+
+        
     }
 }

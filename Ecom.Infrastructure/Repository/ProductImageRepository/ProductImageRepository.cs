@@ -14,17 +14,24 @@ namespace Ecom.Infrastructure.Repository.ImageRepository
 {
     public class ProductImageRepository : IProductImageRepository
     {
+       
+        private readonly Context _dbcontext;
         private readonly SqlConnectionFactory _connectionFactory;
-        private readonly Context _context;
         public ProductImageRepository(SqlConnectionFactory connectionFactory, Context context)
         {
+            _dbcontext = context;
             _connectionFactory = connectionFactory;
-            _context = context;
+        }
+
+        public async Task AddImage(ProductImage image)
+        {
+           await _dbcontext.Images.AddAsync(image);
+          
         }
 
         public async Task<bool> DeleteImageByProductId(int productId)
         {
-            var images = await _context.Images.Where(image => image.ProductId == productId).ToListAsync();
+            var images = await _dbcontext.Images.Where(image => image.ProductId == productId).ToListAsync();
 
             if(images is not null)
             {
