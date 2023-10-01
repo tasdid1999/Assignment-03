@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using Ecom.ClientEntity.Response;
-using Ecom.Entity.DataBase;
+
 using Ecom.Entity.Domain;
 using System;
 using System.Collections.Generic;
@@ -15,7 +15,7 @@ namespace Ecom.Service.Mapper
         public MapperHandler()
         {
             CreateMap<Product, ProductDetails>();
-            CreateMap<DbProduct , ProductDetails>();
+          
         }
     }
 }

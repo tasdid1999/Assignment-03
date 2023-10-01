@@ -33,7 +33,7 @@ namespace Ecom.API.Controllers
                 var products = await _productService.GetAllProduct(page, pageSize);
 
                 return products is not null ? Ok(new { isSucces = true, StatusCode = "200", Status = "OK", Message = "Data Retrived Succesfully", Data = products })
-                                        : BadRequest(new { isSucces = false, StatusCode = "404", Status = "NotFound", Message = "Items not found", Data = products });
+                                            : BadRequest(new { isSucces = false, StatusCode = "404", Status = "NotFound", Message = "Items not found", Data = products });
             }
             catch (Exception ex)
             {
@@ -96,10 +96,14 @@ namespace Ecom.API.Controllers
 
 
         [HttpPut("products/{id}")]
-        public async  Task<IActionResult> UpdateProduct([FromRoute]int id, [FromBody] ProductRequest product)
+        public async  Task<IActionResult> UpdateProduct([FromRoute]int id, [FromForm] ProductRequest product)
         {
             try
             {
+                if(id <= 0)
+                {
+                    return BadRequest(new { isSuccces = false, StatusCode = 400, Status = "BadRequest", Message = "request id is not valid" });
+                }
                 var validationResult = _validator.Validate(product);
 
                 if (!validationResult.IsValid)
@@ -111,7 +115,7 @@ namespace Ecom.API.Controllers
 
                 var isUpdated = await _productService.Update(product, id, token);
 
-                return isUpdated ? Ok(new { isSucces = true, StatusCode = "201", Status = "Created", Message = "Data Updated Succesfully", Data = product })
+                return isUpdated ? Ok(new { isSucces = true, StatusCode = "200", Status = "OK", Message = "Data Updated Succesfully", Data = product })
                                  : BadRequest(new { isSuccces = false, StatusCode = 400, Status = "BadRequest", Message = "request not valid" });
             }
             catch(Exception ex)
@@ -121,18 +125,21 @@ namespace Ecom.API.Controllers
         }
 
 
-        [HttpDelete("products/{id}")]
+        [HttpDelete("products/{id:int}")]
         public async Task<IActionResult> DeleteProduct([FromRoute] int id)
         {
             try
             {
                 if(id <= 0)
                 {
-                    return BadRequest();
+                    return BadRequest(new { isSuccess = false, Status = "Not Found", StatusCode = "404", Message = "requested id is invalid", DataId = id });
                 }
-                var isDeleted = await _productService.Delete(id);
+                string token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
 
-                return isDeleted ? Ok() : BadRequest();
+                var isDeleted = await _productService.Delete(id,token);
+
+                return isDeleted ? Ok(new {isSuccess = true,Status = "Ok", StatusCode = "200",Message = "Deleted Succefully" , DataId = id})
+                                 : BadRequest(new { isSuccess = false, Status = "Bad Request", StatusCode = "400", Message = "id is invalid", DataId = id });
 
 
             }catch(Exception ex)
@@ -147,7 +154,9 @@ namespace Ecom.API.Controllers
         {
             try
             {
-                var isActivate = await _productService.Active(id);
+                string token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+
+                var isActivate = await _productService.Active(id, token);
 
                 return isActivate ? Ok(new { isSuccces = true, StatusCode = 200, Status = "OK", Message = "activation success" })
                                   : BadRequest(new { isSuccces = false, StatusCode = 400, Status = "BadRequest", Message = "activation request not valid" });
@@ -163,10 +172,12 @@ namespace Ecom.API.Controllers
         {
             try
             {
-                var isInActivate = await _productService.InActive(id);
+                string token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+
+                var isInActivate = await _productService.InActive(id, token);
 
                 return isInActivate ? Ok(new { isSuccces = true, StatusCode = 200, Status = "OK", Message = "inactivation success" })
-                                  : BadRequest(new { isSuccces = false, StatusCode = 400, Status = "BadRequest", Message = "inactivation request not valid" });
+                                    : BadRequest(new { isSuccces = false, StatusCode = 400, Status = "BadRequest", Message = "inactivation request not valid" });
             }
             catch (Exception ex)
             {

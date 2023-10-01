@@ -31,5 +31,28 @@ namespace Ecom.Service.Price
             await _unitOfWork.ProductPriceRepository.AddPrice(price);
             
         }
+
+        public async Task UpdatePrice(ProductPrice price)
+        {
+           var existingPrice =  await _unitOfWork.ProductPriceRepository.FindByProductId(price.ProductId);
+
+            if (price is not null)
+            {
+                if(existingPrice.Price != price.Price)
+                {
+                    var newPrice = new ProductPrice {
+
+                        Price = price.Price,
+                        ProductId = price.ProductId,
+                        CreatedAt = DateTime.UtcNow,
+                        CreatedBy = price.UpdatedBy,
+                        StatusId = 1,
+                    };
+                    await _unitOfWork.ProductPriceRepository.AddPrice(newPrice);
+                }
+            }
+
+
+        }
     }
 }

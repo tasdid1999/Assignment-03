@@ -1,4 +1,5 @@
 ﻿using Ecom.ClientEntity.Request.Product;
+using Ecom.Entity.Domain;
 using Ecom.Infrastructure.UnitOfWork;
 using System;
 using System.Collections.Generic;
@@ -12,6 +13,6 @@ namespace Ecom.Service.Price
     {
         Task AddPrice(ProductPriceRequest request);
        
-
+        Task UpdatePrice(ProductPrice price);
     }
 }

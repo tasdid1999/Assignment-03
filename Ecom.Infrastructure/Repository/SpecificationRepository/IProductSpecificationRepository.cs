@@ -10,5 +10,7 @@ namespace Ecom.Infrastructure.Repository.SpecificationRepository
     public interface IProductSpecificationRepository
     {
         Task AddSpecification(List<ProductSpecification> specifications);
+
+        Task<List<ProductSpecification>> GetAllByProductId(int productId);
     }
 }

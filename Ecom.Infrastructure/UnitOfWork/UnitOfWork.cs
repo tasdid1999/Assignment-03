@@ -21,7 +21,11 @@ namespace Ecom.Infrastructure.UnitOfWork
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly RoleManager<IdentityRole> _roleManager;
-        public UnitOfWork(Context dbcontext, SqlConnectionFactory connectionFactory, UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager = null, RoleManager<IdentityRole> roleManager = null)
+        public UnitOfWork(Context dbcontext,
+                          SqlConnectionFactory connectionFactory,
+                          UserManager<IdentityUser> userManager,
+                          SignInManager<IdentityUser> signInManager,
+                          RoleManager<IdentityRole> roleManager)
         {
             _dbcontext = dbcontext;
             _connectionFactory = connectionFactory;

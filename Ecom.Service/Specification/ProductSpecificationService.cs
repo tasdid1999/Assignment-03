@@ -30,5 +30,31 @@ namespace Ecom.Service.Specification
             
 
         }
+
+        public async Task UpdateSpecification(ProductSpecificationRequest request)
+        {
+            var listOfSpecification = await _unitOfWork.ProductSpecificationRepository.GetAllByProductId(request.ProductId);
+
+            var newSpecification = new List<ProductSpecification>();
+
+            foreach (var specification in request.Specification)
+            {
+                var item =  listOfSpecification.Where(x=>x.Key == specification.Key).FirstOrDefault();
+
+                if(item != null)
+                {
+                    item.Value = specification.Value; 
+                }
+                else
+                {
+                    newSpecification.Add(new ProductSpecification { ProductId = request.ProductId, Key = specification.Key, Value = specification.Value, CreatedAt = DateTime.Now, CreatedBy = request.UserId, StatusId = 1 });
+                }
+            }
+
+            if(newSpecification.Count > 0)
+            {
+                await _unitOfWork.ProductSpecificationRepository.AddSpecification(newSpecification);
+            }
+        }
     }
 }

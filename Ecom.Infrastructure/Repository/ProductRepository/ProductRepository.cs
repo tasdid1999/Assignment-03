@@ -2,7 +2,7 @@
 using Dapper;
 using Ecom.ClientEntity.Request.Product;
 using Ecom.ClientEntity.Response;
-using Ecom.Entity.DataBase;
+
 using Ecom.Entity.Domain;
 using Ecom.Infrastructure.Data;
 using Microsoft.Data.SqlClient;

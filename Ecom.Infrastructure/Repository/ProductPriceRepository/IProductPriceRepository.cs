@@ -10,7 +10,7 @@ namespace Ecom.Infrastructure.Repository.ProductPriceRepository
     public interface IProductPriceRepository
     {
         Task AddPrice(ProductPrice price);
-        Task<ProductPrice> Find(int productId);
+        Task<ProductPrice?> FindByProductId(int productId);
         Task<bool> UpdatePrice(ProductPrice price);
     }
 }

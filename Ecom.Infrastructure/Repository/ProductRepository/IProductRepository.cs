@@ -1,6 +1,6 @@
 ﻿using Ecom.ClientEntity.Request.Product;
 using Ecom.ClientEntity.Response;
-using Ecom.Entity.DataBase;
+
 using Ecom.Entity.Domain;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System;

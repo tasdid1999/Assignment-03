@@ -26,7 +26,7 @@ namespace Ecom.Infrastructure.Repository.ProductPriceRepository
             await _dbcontext.Prices.AddAsync(price);
         }
 
-        public async Task<ProductPrice?> Find(int productId)
+        public async Task<ProductPrice?> FindByProductId(int productId)
         {
             return await _dbcontext.Prices.Where(x => x.ProductId == productId).FirstOrDefaultAsync();  
         }
@@ -52,7 +52,6 @@ namespace Ecom.Infrastructure.Repository.ProductPriceRepository
                     };
 
                     await _dbcontext.Prices.AddAsync(newPrice);
-                    await _dbcontext.SaveChangesAsync();
 
                     return true;
                 }

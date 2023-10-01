@@ -10,5 +10,9 @@ namespace Ecom.Service.Specification
     public interface IProductSpecificationService
     {
         Task AddSpecification(ProductSpecificationRequest request);
+
+        Task UpdateSpecification(ProductSpecificationRequest request);
+
+
     }
 }

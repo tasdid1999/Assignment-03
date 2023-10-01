@@ -2,6 +2,7 @@
 using Ecom.ClientEntity.Response;
 using Ecom.Entity.Domain;
 using Ecom.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System;
 using System.Collections.Generic;
@@ -25,6 +26,11 @@ namespace Ecom.Infrastructure.Repository.SpecificationRepository
         public async Task AddSpecification(List<ProductSpecification> specifications)
         {
             await _dbContext.Specifications.AddRangeAsync(specifications);
+        }
+
+        public async Task<List<ProductSpecification>> GetAllByProductId(int productId)
+        {
+           return await _dbContext.Specifications.Where(x => x.ProductId == productId).ToListAsync();
         }
     }
     

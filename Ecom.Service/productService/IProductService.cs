@@ -16,9 +16,9 @@ namespace Ecom.Service.productService
         Task<List<ProductResponse>> GetAllProduct(int page, int pageSize);
         Task<bool> Add(ProductRequest product,string token);
         Task<bool> Update(ProductRequest product , int productId,string token);
-        Task<bool> Delete(int id);
-        Task<bool> Active(int id);
-        Task<bool> InActive(int id);
+        Task<bool> Delete(int id,string token);
+        Task<bool> Active(int id,string token);
+        Task<bool> InActive(int id,string token);
 
         
     }

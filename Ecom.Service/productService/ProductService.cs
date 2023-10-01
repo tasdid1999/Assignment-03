@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using Azure.Core;
+﻿using Azure.Core;
 using Ecom.ClientEntity.Request.Product;
 using Ecom.ClientEntity.Response;
 using Ecom.Entity.Domain;
@@ -8,14 +7,9 @@ using Ecom.Service.Image;
 using Ecom.Service.Price;
 using Ecom.Service.Specification;
 using Ecom.Service.Token;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace Ecom.Service.productService
 {
@@ -25,26 +19,32 @@ namespace Ecom.Service.productService
         private readonly IImageServices _imageService;
         private readonly IProductPriceService _priceService;
         private readonly IProductSpecificationService _specificationService;
-        private readonly IMapper _mapper;
+       
 
-        public ProductService(IUnitOfWork unitOfWork, IMapper mapper, IImageServices imageService, IProductPriceService priceService, IProductSpecificationService specificationService)
+        public ProductService(IUnitOfWork unitOfWork,
+                              IImageServices imageService,
+                              IProductPriceService priceService,
+                              IProductSpecificationService specificationService)
         {
             _unitOfWork = unitOfWork;
-            _mapper = mapper;
             _imageService = imageService;
             _priceService = priceService;
             _specificationService = specificationService;
         }
 
-        public async Task<bool> Active(int id)
+        public async Task<bool> Active(int id,string token)
         {
             var product = await _unitOfWork.ProductRepository.Find(id);
+            var updatedBy = JwtTokenFactory.GetUserIdFromToken(token);
 
             if (product is not null)
             {
                 if (product.StatusId == 0)
                 {
                     product.StatusId = 1;
+                    product.UpdatedBy = updatedBy;
+                    product.UpdatedAt = DateTime.UtcNow;
+
                     return await _unitOfWork.SaveChangesAsync() ? true : false;
 
                 }
@@ -54,15 +54,19 @@ namespace Ecom.Service.productService
 
             return false;
         }
-        public async Task<bool> InActive(int id)
+        public async Task<bool> InActive(int id,string token)
         {
             var product = await _unitOfWork.ProductRepository.Find(id);
+            var updatedBy = JwtTokenFactory.GetUserIdFromToken(token);
 
             if (product is not null)
             {
                 if (product.StatusId == 1)
                 {
                     product.StatusId = 0;
+                    product.UpdatedBy = updatedBy;
+                    product.UpdatedAt = DateTime.UtcNow;
+
                     return await _unitOfWork.SaveChangesAsync() ? true : false;
 
                 }
@@ -107,6 +111,7 @@ namespace Ecom.Service.productService
 
             //product specification add section
             var specificationData = JsonConvert.DeserializeObject<List<KeyValuePair<string, string>>>(request.Specification);
+
             var specificationRequest = new ProductSpecificationRequest
             {
                 UserId = CreatedBy,
@@ -125,17 +130,23 @@ namespace Ecom.Service.productService
             };
             await _imageService.AddImage(productImage);
 
+            //final commit
             return await _unitOfWork.SaveChangesAsync();
   
         }
 
-        public async Task<bool> Delete(int id)
+        public async Task<bool> Delete(int id, string token)
         {
             var product = await _unitOfWork.ProductRepository.Find(id);
 
-            if(product is not null && product.StatusId != 2)
+            var updatedBy = JwtTokenFactory.GetUserIdFromToken(token);
+
+            if (product is not null && product.StatusId != 2)
             {
                product.StatusId = 2;
+               product.UpdatedBy = updatedBy;
+               product.UpdatedAt = DateTime.UtcNow;
+
                await _unitOfWork.SaveChangesAsync();
                return true;
             }
@@ -161,38 +172,44 @@ namespace Ecom.Service.productService
         {
             var updatedBy = JwtTokenFactory.GetUserIdFromToken(token);
 
-            var dbProduct = await _unitOfWork.ProductRepository.GetById(productId);
+            //product update
+            var existingProduct = await _unitOfWork.ProductRepository.Find(productId);
 
-            if(dbProduct is  null)
+            if (existingProduct is not null)
             {
-                return false;
+                existingProduct.Brand = product.Brand;
+                existingProduct.Model = product.Model;
+                existingProduct.Name = product.ProductName;
+                existingProduct.UpdatedAt = DateTime.UtcNow;
+                existingProduct.UpdatedBy = updatedBy;
             }
+            // price update
 
-            var newProduct = new Product
-            {
-                Id = productId,
-                Name = product.ProductName,
-                Brand = product.Brand,
-                Model = product.Model,
-                UpdatedBy = updatedBy,
-            };
-
-           // var isProductUpdated = await _unitOfWork.ProductRepository.Update(newProduct);
-
-            var newProductPrice = new ProductPrice
+            var updatedPrice = new ProductPrice
             {
                 Price = product.Price,
                 ProductId = productId,
                 UpdatedAt = DateTime.UtcNow,
-                UpdatedBy = updatedBy
+                UpdatedBy = updatedBy,
+
+            };
+            await _priceService.UpdatePrice(updatedPrice);
+
+            // specification
+
+            var specificationData = JsonConvert.DeserializeObject<List<KeyValuePair<string, string>>>(product.Specification);
+
+            var specificationRequest = new ProductSpecificationRequest
+            {
+                UserId = updatedBy,
+                ProductId = productId,
+                Specification = specificationData
             };
 
-            var isPriceUpdated = await _unitOfWork.ProductPriceRepository.UpdatePrice(newProductPrice);
+            await _specificationService.UpdateSpecification(specificationRequest);
 
-            
+            return await _unitOfWork.SaveChangesAsync();
 
-            
-            return true;
         }
     }
 }
